@@ -13,9 +13,12 @@ func requestServiceAnnouncement(overseerRoot string, service []byte) {
 	go func() {
 		available := true
 
+		donechan := make(chan bool)
 		checkchan := make(chan bool)
 		errorchan := make(chan error)
+
 		defer func() {
+			close(donechan)
 			close(checkchan)
 			close(errorchan)
 		}()
@@ -24,27 +27,40 @@ func requestServiceAnnouncement(overseerRoot string, service []byte) {
 
 			go func() {
 				resp, err := http.Post(overseerRoot, "application/json", bytes.NewBuffer(service))
-				if err != nil {
-					errorchan <- err
+				select {
+				case <-donechan:
 					return
-				}
-				if resp.StatusCode > 299 {
-					errorchan <- fmt.Errorf("Request Error: %s", resp.Status)
-					return
-				}
+				default:
+					if err != nil {
+						errorchan <- err
+						return
+					}
+					if resp.StatusCode > 299 {
+						errorchan <- fmt.Errorf("Request Error: %s", resp.Status)
+						return
+					}
 
-				checkchan <- true
+					checkchan <- true
+				}
 			}() // end request routine
 
 			select {
 			case <-checkchan:
 				// JUST GO ON
-			case <-errorchan:
+			case err := <-errorchan:
+				fmt.Println(err)
+				time.Sleep(2 * time.Second)
+				requestServiceAnnouncement(overseerRoot, service)
+				available = false
+				return
 			case <-time.After(time.Second * 3):
+				donechan <- true
+				fmt.Errorf("Registering new Service failed with timeout")
+				time.Sleep(2 * time.Second)
+				requestServiceAnnouncement(overseerRoot, service)
 			}
 
-			time.Sleep(10 * time.Minute) // update registration once a minute
-
+			time.Sleep(10 * time.Minute) // renewal registration once in a time, in case the overseer service failed
 		} // end for loop
 
 	}() // end loop routine
