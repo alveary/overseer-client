@@ -1,0 +1,4 @@
+#!/bin/sh
+
+godep go test ./...
+reflex -r '.*\.go' -- sh -c 'godep go test ./...'
