@@ -1,0 +1,25 @@
+{
+	"ImportPath": "github.com/alveary/overseer-client",
+	"GoVersion": "go1.4.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/alveary/overseer/service",
+			"Rev": "5da87c31c1de1ce3f8b3158da1bbc69e210fec67"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Rev": "e4ec8152c15fc46bd5056ce65997a07c7d415325"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/require",
+			"Rev": "e4ec8152c15fc46bd5056ce65997a07c7d415325"
+		},
+		{
+			"ImportPath": "github.com/stretchr/testify/suite",
+			"Rev": "e4ec8152c15fc46bd5056ce65997a07c7d415325"
+		}
+	]
+}
