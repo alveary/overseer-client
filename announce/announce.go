@@ -26,7 +26,7 @@ func requestServiceAnnouncement(overseerRoot string, service []byte) {
 		for available {
 
 			go func() {
-				resp, err := http.Post("http://"+overseerRoot, "application/json", bytes.NewBuffer(service))
+				resp, err := http.Post(overseerRoot, "application/json", bytes.NewBuffer(service))
 				select {
 				case <-donechan:
 					return
