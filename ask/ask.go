@@ -6,33 +6,41 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/alveary/overseer/service"
 )
 
+// Service response from overseer http request
+type Service struct {
+}
+
+func requestOverseer(name string, errorchan chan error, responsechan chan *http.Response) {
+	overseerHost := os.Getenv("OVERSEER_HOST")
+	overseerPort := os.Getenv("OVERSEER_PORT")
+
+	resp, err := http.Get(overseerHost + ":" + overseerPort + "/" + name)
+
+	if err != nil {
+		errorchan <- err
+		return
+	}
+	if resp.StatusCode > 299 {
+		errorchan <- fmt.Errorf("Request Error: %s", resp.Status)
+		return
+	}
+
+	responsechan <- resp
+}
+
 // ForService lets you retrieve the service URI information
-func ForService(serviceName string) (retrieved service.Service, err error) {
-	overseerRoot := os.Getenv("OVERSEER_ROOT")
+func ForService(serviceName string) (retrieved Service, err error) {
 	responsechan := make(chan *http.Response)
 	errorchan := make(chan error)
+
 	defer func() {
 		close(responsechan)
 		close(errorchan)
 	}()
 
-	go func() {
-		resp, err := http.Get(overseerRoot + "/" + serviceName)
-		if err != nil {
-			errorchan <- err
-			return
-		}
-		if resp.StatusCode > 299 {
-			errorchan <- fmt.Errorf("Request Error: %s", resp.Status)
-			return
-		}
-
-		responsechan <- resp
-	}()
+	go requestOverseer(serviceName, errorchan, responsechan)
 
 	select {
 	case resp := <-responsechan:
