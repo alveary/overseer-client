@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+type serviceJSON struct {
+	Name  string `json:"name"`
+	Root  string `json:"root"`
+	Alive string `json:"alive"`
+}
+
 func postService(address string, service []byte, donechan chan bool, errorchan chan error, checkchan chan bool) {
 	resp, err := http.Post(address, "application/json", bytes.NewBuffer(service))
 	select {
@@ -69,30 +75,40 @@ func requestServiceAnnouncement(overseerAddress string, service []byte) {
 	}() // end loop routine
 }
 
-// Service provides a method to attach a new Service to the overseer stack
-func Service(serviceName string) {
-	serviceRoot := os.Getenv("ROOT_URL")
-	aliveResource := os.Getenv("ALIVE_URL")
+func overseerAddress() string {
 
 	overseerHost := os.Getenv("OVERSEER_HOST")
 	overseerPort := os.Getenv("OVERSEER_PORT")
-	overseerAddress := overseerHost + ":" + overseerPort
 
-	if serviceRoot == "" || aliveResource == "" || overseerHost == "" || overseerPort == "" {
-		log.Println("ROOT_URL and/or ALIVE_URL and/or OVERSEER_ROOT not set")
-		return
+	if overseerHost == "" || overseerPort == "" {
+		log.Fatal("OVERSEER_HOST or OVERSEER_PORT not set")
 	}
 
-	service, _ := json.Marshal(struct {
-		Name  string `json:"name"`
-		Root  string `json:"root"`
-		Alive string `json:"alive"`
-	}{
+	return overseerHost + ":" + overseerPort
+}
+
+func serviceAddresses() (string, string) {
+	serviceRoot := os.Getenv("ROOT_URL")
+	aliveResource := os.Getenv("ALIVE_URL")
+
+	if serviceRoot == "" || aliveResource == "" {
+		log.Println("ROOT_URL and/or ALIVE_URL")
+	}
+
+	return serviceRoot, aliveResource
+}
+
+// Service provides a method to attach a new Service to the overseer stack
+func Service(serviceName string) {
+	serviceRoot, aliveResource := serviceAddresses()
+	overseerAddress := overseerAddress()
+
+	service, _ := json.Marshal(serviceJSON{
 		serviceName,
 		serviceRoot,
 		aliveResource,
 	})
 
-	fmt.Printf("Announcing new Service to Overseer: %s", service)
+	log.Printf("Announcing new Service to Overseer: %s", service)
 	requestServiceAnnouncement(overseerAddress, service)
 }
