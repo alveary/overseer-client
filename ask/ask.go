@@ -10,6 +10,8 @@ import (
 
 // Service response from overseer http request
 type Service struct {
+	name    string
+	address string
 }
 
 func requestOverseer(name string, errorchan chan error, responsechan chan *http.Response) {

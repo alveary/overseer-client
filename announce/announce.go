@@ -66,6 +66,7 @@ func requestServiceAnnouncement(overseerAddress string, service []byte) {
 				donechan <- true
 				log.Printf("Registering new Service failed with timeout")
 				time.Sleep(2 * time.Second)
+				// TODO: add retry counter to break this circle
 				requestServiceAnnouncement(overseerAddress, service)
 			}
 
@@ -76,7 +77,6 @@ func requestServiceAnnouncement(overseerAddress string, service []byte) {
 }
 
 func overseerAddress() string {
-
 	overseerHost := os.Getenv("OVERSEER_HOST")
 	overseerPort := os.Getenv("OVERSEER_PORT")
 
