@@ -11,9 +11,8 @@ import (
 )
 
 type serviceJSON struct {
-	Name  string `json:"name"`
-	Root  string `json:"root"`
-	Alive string `json:"alive"`
+	Name string `json:"name"`
+	Root string `json:"address"`
 }
 
 func postService(address string, service []byte, donechan chan bool, errorchan chan error, checkchan chan bool) {
@@ -80,6 +79,8 @@ func overseerAddress() string {
 	overseerHost := os.Getenv("OVERSEER_HOST")
 	overseerPort := os.Getenv("OVERSEER_PORT")
 
+	log.Printf("Announce to Overseer: %s", overseerHost)
+
 	if overseerHost == "" || overseerPort == "" {
 		log.Fatal("OVERSEER_HOST or OVERSEER_PORT not set")
 	}
@@ -100,13 +101,11 @@ func serviceAddresses() (string, string) {
 
 // Service provides a method to attach a new Service to the overseer stack
 func Service(serviceName string) {
-	serviceRoot, aliveResource := serviceAddresses()
+	serviceRoot, _ := serviceAddresses()
 	overseerAddress := overseerAddress()
-
 	service, _ := json.Marshal(serviceJSON{
 		serviceName,
 		serviceRoot,
-		aliveResource,
 	})
 
 	log.Printf("Announcing new Service to Overseer: %s", service)
